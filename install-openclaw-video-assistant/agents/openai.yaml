@@ -1,0 +1,3 @@
+display_name: Install OpenClaw Video Assistant
+short_description: Install the video assistant repo as a workspace-backed OpenClaw agent.
+default_prompt: Install openclaw-video-assistant on this machine, register it as video-agent, optionally bind an existing Feishu account, and verify the gateway restart.
