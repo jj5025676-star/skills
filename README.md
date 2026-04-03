@@ -98,6 +98,90 @@ skills/
 - 建立 `accountId -> agent` 路由
 - 重启 gateway
 
+## 安装原则
+
+这个仓库里的 skill，默认建议：
+
+- `只安装到当前聊天页面对应的 OpenClaw workspace`
+- `不要装到全局 skills`
+- `不要默认装到所有 agent`
+
+原因很简单：
+
+- 多 agent 环境下，工作区安装更清晰
+- 不容易让别的机器人误看到不该看到的管理类 skill
+- 出问题时更容易定位
+
+对你现在这类多机器人、多 agent 场景，推荐做法是：
+
+- 你在哪个机器人/哪个 agent 页面里想使用这个 skill
+- 就把 skill 装到那个 agent 对应的 `workspace/skills` 目录
+
+## OpenClaw 安装位置怎么选
+
+按这台机器当前结构举例：
+
+- `main` 对应：
+  - `D:\openclaw_workspace\skills`
+- `bot2-agent` 对应：
+  - `D:\openclaw_workspace_bot2\skills`
+- `bot3-agent` 对应：
+  - `D:\openclaw_workspace_bot3\skills`
+
+如果你当前聊天页面属于：
+
+- 机器人1 / `main`
+  - 就装到 `D:\openclaw_workspace\skills`
+- 机器人2 / `bot2-agent`
+  - 就装到 `D:\openclaw_workspace_bot2\skills`
+- 机器人3 / `bot3-agent`
+  - 就装到 `D:\openclaw_workspace_bot3\skills`
+
+一句话：
+
+- `装到当前聊天页面对应的 workspace/skills`
+- `不要装到全局`
+
+## 安装命令
+
+如果你只想把这个 skill 装到“当前聊天页面对应的 OpenClaw 工作区”，做法是：
+
+1. 先确认当前聊天页面对应哪个 workspace
+2. 再把这个 skill 子目录复制进去
+
+示例：如果当前聊天页面对应 `D:\openclaw_workspace`
+
+```powershell
+cd $env:TEMP
+if (Test-Path .\skills) { Remove-Item -Recurse -Force .\skills }
+git clone https://github.com/jj5025676-star/skills.git
+Copy-Item -Recurse .\skills\add-feishu-bot-agent-skill D:\openclaw_workspace\skills\
+```
+
+如果当前聊天页面对应 `D:\openclaw_workspace_bot2`
+
+```powershell
+cd $env:TEMP
+if (Test-Path .\skills) { Remove-Item -Recurse -Force .\skills }
+git clone https://github.com/jj5025676-star/skills.git
+Copy-Item -Recurse .\skills\add-feishu-bot-agent-skill D:\openclaw_workspace_bot2\skills\
+```
+
+如果当前聊天页面对应 `D:\openclaw_workspace_bot3`
+
+```powershell
+cd $env:TEMP
+if (Test-Path .\skills) { Remove-Item -Recurse -Force .\skills }
+git clone https://github.com/jj5025676-star/skills.git
+Copy-Item -Recurse .\skills\add-feishu-bot-agent-skill D:\openclaw_workspace_bot3\skills\
+```
+
+如果目标目录里已经有旧版本，先删旧目录再复制：
+
+```powershell
+Remove-Item -Recurse -Force D:\openclaw_workspace\skills\add-feishu-bot-agent-skill
+```
+
 ## add-feishu-bot-agent-skill 怎么用
 
 详细说明看：

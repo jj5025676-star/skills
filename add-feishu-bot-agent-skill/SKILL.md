@@ -9,6 +9,8 @@ Use this skill when adding a new Feishu robot to the current machine's OpenClaw 
 
 Prefer using this skill directly from chat. When the user provides the required fields in chat, run the bundled script instead of asking them to copy a terminal command unless they explicitly want to run it themselves.
 
+Install this skill into the current OpenClaw chat workspace only. Do not assume global installation.
+
 This skill only automates the OpenClaw side:
 
 - add `channels.feishu.accounts.<accountId>`
@@ -37,6 +39,24 @@ This skill is tailored to the current machine:
 - active OpenClaw config: `/home/z852963/.openclaw/openclaw.json`
 - Windows mirror of config: `\\wsl.localhost\Ubuntu\home\z852963\.openclaw\openclaw.json`
 - default workspace pattern: `D:\openclaw_workspace_<accountId>`
+
+## Installation scope
+
+Recommended installation scope:
+
+- install into the current chat page's OpenClaw `workspace/skills`
+- do not install globally by default
+
+Examples on this machine:
+
+- `main` chat page:
+  - `D:\openclaw_workspace\skills`
+- `bot2-agent` chat page:
+  - `D:\openclaw_workspace_bot2\skills`
+- `bot3-agent` chat page:
+  - `D:\openclaw_workspace_bot3\skills`
+
+This skill is administrative. Keeping it workspace-local is safer and easier to reason about in multi-agent setups.
 
 ## Inputs to gather
 
