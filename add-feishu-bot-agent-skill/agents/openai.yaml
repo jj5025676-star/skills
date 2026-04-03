@@ -1,0 +1,3 @@
+display_name: Add Feishu Bot Agent
+short_description: Add a Feishu robot to OpenClaw and bind it to its own agent.
+default_prompt: Add a new Feishu robot account to this OpenClaw setup, create a dedicated agent and workspace for it, and verify the routing.
