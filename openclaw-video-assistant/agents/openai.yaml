@@ -1,0 +1,3 @@
+display_name: Movo Video Generator
+short_description: Generate Movo videos from prompts or reference images.
+default_prompt: Help me choose the right Movo template or veo3.1 mode, confirm the plan, run the real request, poll for completion, and return the real video result.

@@ -1,52 +1,36 @@
 # skills
 
-这个仓库用来存放多个 `Codex / OpenClaw skill`。
+This repository stores multiple local OpenClaw/Codex skills.
 
-每个 skill 都放在自己的子目录里，目录内通常包含：
+Each top-level skill directory should normally contain:
 
 - `SKILL.md`
 - `scripts/`
-- `agents/`
+- `agents/` (optional)
+- `references/` (optional)
 
-## 当前 skills
+## Current skills
 
-- [`add-feishu-bot-agent-skill`](./add-feishu-bot-agent-skill)
-  - 给当前机器上的 OpenClaw 新增一个飞书机器人账号，并绑定到独立 agent / workspace
-- [`install-openclaw-video-assistant`](./install-openclaw-video-assistant)
-  - 一键拉取 `openclaw-video-assistant` 仓库，注册为新的 `video-agent`，并可选绑定到现有飞书机器人
+- [add-feishu-bot-agent-skill](./add-feishu-bot-agent-skill)
+  - Add a new Feishu bot account into OpenClaw and bind it to a dedicated agent/workspace.
+- [install-openclaw-video-assistant](./install-openclaw-video-assistant)
+  - Install the `openclaw-video-assistant` package into the current OpenClaw workspace and register a `video-agent`.
+- [openclaw-video-assistant](./openclaw-video-assistant)
+  - The active `movo-video-generator` skill synchronized from the local bot4 workspace.
 
-## 使用原则
+## Usage principles
 
-- 默认安装到当前聊天页面对应的 `workspace/skills`
-- 不建议默认全局安装
-- 管理类 skill 尽量只给主工作区使用
+- Prefer installing skills into the current chat page's workspace `skills/` directory.
+- Do not default to global installation.
+- Keep management skills in a trusted admin workspace whenever possible.
 
-## 典型场景
-
-### 1. 新增飞书机器人
-
-使用 `add-feishu-bot-agent-skill`：
-
-- 新增 `channels.feishu.accounts.<accountId>`
-- 创建独立 agent
-- 创建独立 workspace
-- 建立 `accountId -> agentId` binding
-
-### 2. 新增视频工作区 agent
-
-使用 `install-openclaw-video-assistant`：
-
-- 从 GitHub 拉取 `openclaw-video-assistant`
-- 在 OpenClaw 中创建 `video-agent`
-- 让 `video-agent` 的 workspace 指向该仓库
-- 可选把某个已有飞书机器人绑定到这个 `video-agent`
-
-## 后续加 skill 的建议结构
+## Suggested structure
 
 ```text
 skills/
 ├─ README.md
 ├─ .gitignore
 ├─ add-feishu-bot-agent-skill/
-└─ install-openclaw-video-assistant/
+├─ install-openclaw-video-assistant/
+└─ openclaw-video-assistant/
 ```
