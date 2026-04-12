@@ -1,163 +1,126 @@
 ---
 name: add-feishu-bot-agent
-description: Add another Feishu self-built app robot into the current OpenClaw WSL setup and bind it to a dedicated agent, workspace, and private-message session scope. Use when the user provides a new Feishu App ID and App Secret and wants one more Feishu robot to work independently inside the same OpenClaw instance on this machine.
+description: Safely add another Feishu self-built app robot into the current OpenClaw setup and bind it to a dedicated agent and workspace. Use when the user already has a Feishu App ID and App Secret and wants one more Feishu robot to work independently inside the same OpenClaw instance.
 ---
 
 # Add Feishu Bot Agent
 
-Use this skill when adding a new Feishu robot to the current machine's OpenClaw setup.
+Use this skill when the user already finished the Feishu backend setup and now wants to add that robot to the current OpenClaw instance.
 
-Prefer using this skill directly from chat. When the user provides the required fields in chat, run the bundled script instead of asking them to copy a terminal command unless they explicitly want to run it themselves.
+Install this skill into the current chat page's `workspace/skills` only. Do not assume global installation.
 
-Install this skill into the current OpenClaw chat workspace only. Do not assume global installation.
+## Use this skill when
+
+- the user provides a new `App ID` and `App Secret`
+- the user wants a dedicated Feishu `accountId`
+- the user wants a dedicated OpenClaw `agent`
+- the user wants a safe config write with backup and rollback
+
+## Do not use this skill when
+
+- the user has not finished the Feishu backend setup
+- the user wants to create the Feishu app itself
+- the user wants to run raw `openclaw config set` commands in chat
+- the user only wants to inspect existing config
+
+## Scope
 
 This skill only automates the OpenClaw side:
 
 - add `channels.feishu.accounts.<accountId>`
 - ensure `session.dmScope = "per-account-channel-peer"`
-- add a dedicated `agent`
-- add a `binding` from `accountId` to that `agent`
-- create the new agent directories
-- create the new workspace directory
-- optionally restart the WSL gateway
+- create or update a dedicated `agent`
+- create or update a `binding`
+- create missing agent and workspace directories
 
-This skill does not automate the Feishu backend console. The user must manually complete:
+This skill does not automate the Feishu backend console. The user must still:
 
 - create the self-built app
 - enable robot capability
-- enable event subscription via long connection
+- enable persistent connection events
 - add `im.message.receive_v1`
-- grant message send/receive permissions
-- add the current account to test members if the app is still in test mode
+- grant send/receive permissions
+- add test members when needed
 - publish the latest version
 
-## Current machine defaults
+## Safety boundary
 
-This skill is tailored to the current machine:
+This skill must not use `openclaw config set`, `openclaw config apply`, or any direct chat-driven config command.
+
+Always use the bundled script so the write path is:
+
+- full config read
+- merge in memory
+- backup
+- validation
+- rollback on failure
+
+Prefer `restart=false` by default. Only restart when the user explicitly asks for it, or when the user is operating from the local OpenClaw control UI and accepts that the current session may be interrupted.
+
+## Machine defaults
 
 - WSL distro: `Ubuntu`
-- active OpenClaw config: `/home/z852963/.openclaw/openclaw.json`
-- Windows mirror of config: `\\wsl.localhost\Ubuntu\home\z852963\.openclaw\openclaw.json`
-- default workspace pattern: `D:\openclaw_workspace_<accountId>`
+- active config: `/home/z852963/.openclaw/openclaw.json`
+- Windows mirror: `\\wsl.localhost\Ubuntu\home\z852963\.openclaw\openclaw.json`
+- default workspace: `D:\openclaw_workspace_<accountId>`
 
-## Installation scope
+## Inputs
 
-Recommended installation scope:
-
-- install into the current chat page's OpenClaw `workspace/skills`
-- do not install globally by default
-
-Examples on this machine:
-
-- `main` chat page:
-  - `D:\openclaw_workspace\skills`
-- `bot2-agent` chat page:
-  - `D:\openclaw_workspace_bot2\skills`
-- `bot3-agent` chat page:
-  - `D:\openclaw_workspace_bot3\skills`
-
-This skill is administrative. Keeping it workspace-local is safer and easier to reason about in multi-agent setups.
-
-## Inputs to gather
-
-Before running the script, gather these fields from the chat message:
-
-- `accountId`
-  - example: `bot3`
-- `appId`
-  - example: `cli_xxx`
-- `appSecret`
-- `agentId`
-  - example: `bot3-agent`
-- optional `workspace`
-  - default: `D:\openclaw_workspace_<accountId>`
-
-## Chat-first input format
-
-When the user wants to do this directly in chat, ask them to send the parameters in this exact shape:
-
-```text
-使用 add-feishu-bot-agent 技能新增机器人
-accountId=bot3
-appId=cli_xxx
-appSecret=xxxx
-agentId=bot3-agent
-workspace=D:\openclaw_workspace_bot3
-restart=true
-```
-
-Minimum required fields:
+Required:
 
 - `accountId`
 - `appId`
 - `appSecret`
 - `agentId`
 
-Optional fields:
+Optional:
 
 - `workspace`
 - `restart`
 
 Defaults:
 
-- if `workspace` is omitted, use `D:\openclaw_workspace_<accountId>`
-- if `restart` is omitted, treat it as `true`
+- `workspace=D:\openclaw_workspace_<accountId>`
+- `restart=false`
 
-## How to execute from chat
+## Chat input format
 
-When the user provides the fields in chat:
+```text
+Use add-feishu-bot-agent
+accountId=bot3
+appId=cli_xxx
+appSecret=xxxx
+agentId=bot3-agent
+workspace=D:\openclaw_workspace_bot3
+restart=false
+```
 
-1. Parse the fields exactly.
-2. Validate that `accountId`, `appId`, `appSecret`, and `agentId` are present.
-3. Run the bundled script with the parsed values.
-4. Restart the WSL gateway unless the user explicitly sets `restart=false`.
-5. Report:
-   - which config file was updated
-   - which agent was created
-   - which workspace was created
-   - whether gateway restart succeeded
-6. Tell the user what still must be done manually in Feishu backend if the robot has not been configured there yet.
+If a field is missing, ask only for the missing field.
 
-If a field is missing, ask only for the missing field and do not ask the user to re-send everything.
-
-## Script path for execution
-
-Use this script:
+## Script path
 
 `D:\openclaw_workspace\skills\add-feishu-bot-agent\scripts\add_feishu_bot_agent.py`
 
-## Run
-
-If you must show the terminal command, use:
+## Terminal form
 
 ```powershell
-python "D:\openclaw_workspace\skills\add-feishu-bot-agent\scripts\add_feishu_bot_agent.py" --account-id bot3 --app-id cli_xxx --app-secret your_secret --agent-id bot3-agent --restart
+python "D:\openclaw_workspace\skills\add-feishu-bot-agent\scripts\add_feishu_bot_agent.py" --account-id bot3 --app-id cli_xxx --app-secret your_secret --agent-id bot3-agent
 ```
 
-If the workspace should be custom:
+Only add `--restart` when explicitly requested.
 
-```powershell
-python "D:\openclaw_workspace\skills\add-feishu-bot-agent\scripts\add_feishu_bot_agent.py" --account-id bot3 --app-id cli_xxx --app-secret your_secret --agent-id bot3-agent --workspace "D:\custom_bot3_workspace" --restart
-```
+## Report after execution
+
+- updated config path
+- backup path
+- account id
+- agent id
+- workspace path
+- whether restart was skipped or executed
 
 ## Verify
-
-After the restart, verify with:
 
 ```powershell
 wsl -d Ubuntu -- systemctl --user status openclaw-gateway.service --no-pager
 wsl -d Ubuntu -- bash -lc "tail -n 80 /tmp/openclaw/openclaw-$(date +%F).log"
 ```
-
-Look for a line like:
-
-```text
-feishu[bot3]: dispatching to agent (session=agent:bot3-agent:feishu:bot3:direct:ou_xxx)
-```
-
-If the robot receives the message but does not reply, check Feishu backend manually:
-
-- event subscription
-- message permissions
-- test members
-- version publish

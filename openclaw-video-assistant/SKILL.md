@@ -14,6 +14,7 @@ Before building any live request body, read `references/movo-request-reference.m
 - Understand the request, choose the right mode, confirm once, then execute.
 - Never invent task ids, statuses, result URLs, or successful completion.
 - Never hardcode a real API key into files. Read `X-Movo-API-Key` from the current turn or ask for it.
+- Prefer exporting the API key to `MOVO_API_KEY` for command execution. Avoid passing secrets on the shell command line when possible.
 - If the API key is missing, ask only for the key.
 - Prefer real delivery over abstract advice. If execution is blocked, say exactly why.
 - Restore protocol accuracy before brevity. When a request involves payload assembly, polling fields, or result extraction, consult the bundled reference file first.
@@ -77,24 +78,33 @@ Send every request with:
 
 Template video endpoints:
 
-- submit: `POST https://mtapi.movoai.top/v1/videos`
-- poll: `GET https://mtapi.movoai.top/v1/videos/search/{id}`
+- submit: `POST https://mtapi.1movo.com/v1/videos`
+- poll: `GET https://mtapi.1movo.com/v1/videos/search/{id}`
 
 veo3.1 endpoints:
 
-- submit: `POST https://mtapi.movoai.top/v1/llms/video`
-- poll: `GET https://mtapi.movoai.top/v1/llms/search/video/{conversation_id}`
+- submit: `POST https://mtapi.1movo.com/v1/llms/video`
+- poll: `GET https://mtapi.1movo.com/v1/llms/search/video/{conversation_id}`
+
+### Optimized Features
+- **Network Resilience**: The Python helper now automatically falls back to `curl` if `requests` encounters a connection timeout or error.
+- **Service ID Auto-mapping**: Common aliases like `veo3.1-fast` are automatically mapped to the correct backend `llm-veo31-fast`.
+- **Automatic Retries**: Retries up to 3 times for 502, 503, and 504 server errors.
+- **Configurable Base URL**: Use `MOVO_API_BASE_URL` environment variable to change the API root.
 
 Prefer the bundled Python helper instead of assembling long `curl` commands in chat:
 
 ```bash
+set MOVO_API_KEY=...
 python {baseDir}/scripts/movo_video_api.py submit-template ...
 python {baseDir}/scripts/movo_video_api.py submit-veo ...
-python {baseDir}/scripts/movo_video_api.py poll --kind template --identifier 31 --watch
-python {baseDir}/scripts/movo_video_api.py poll --kind veo --identifier 123 --watch
+python {baseDir}/scripts/movo_video_api.py status --kind template --identifier 31
+python {baseDir}/scripts/movo_video_api.py poll --kind template --identifier 31
+python {baseDir}/scripts/movo_video_api.py poll --kind veo --identifier 123
+python {baseDir}/scripts/movo_video_api.py poll --kind veo --identifier 123 --download
 ```
 
-Use the request-body patterns from `references/movo-request-reference.md`. If a live response indicates a schema mismatch, let the Python helper retry with the documented compatibility body instead of inventing a third shape.
+Use the request-body patterns from `references/movo-request-reference.md`. For the live veo endpoint, follow the currently verified `prompt` body and do not invent alternate schemas during normal execution.
 
 ## Template mode notes
 
@@ -112,8 +122,10 @@ Use the request-body patterns from `references/movo-request-reference.md`. If a 
 - First-frame mode uses 1 image.
 - First-plus-last-frame mode uses 2 images.
 - Use `720x1280` for vertical output and `1280x720` for horizontal output unless the user says otherwise.
-- Prefer the `messages` plus `ref_images` body shown in the reference file for `/v1/llms/video`.
-- If the live API rejects `messages` or `ref_images` with a validation error, retry once with the compatibility body that uses `input_texts` and `input_image_urls`.
+- For `/v1/llms/video`, prefer the currently verified live body with:
+  - `prompt`
+  - optional `ref_images`
+- If the live API returns a validation error, report the real error instead of guessing a new request shape.
 
 ## Execute and poll
 
@@ -121,8 +133,13 @@ After submission:
 
 - For template modes, read `data.id` from the response.
 - For veo modes, prefer `data.conversation_id`. If it is missing, fall back to `data.user_sequence_id` only as a secondary identifier.
-- Poll every 60 seconds until a terminal state is reached.
-- Use `scripts/movo_video_api.py poll ... --watch` for polling so long prompts or image payloads do not leak back into a giant shell command.
+- Default behavior: after a successful submit, return the real task id to the user immediately instead of blocking the same turn waiting for completion.
+- Default chat behavior is `submit` now, `status` later if the user asks again.
+- Do not promise background completion notifications.
+- Use `status` for a single check without waiting.
+- Only use `poll` when the user explicitly says to wait in the same turn.
+- Use `poll --download` only when the user explicitly wants the finished file downloaded locally in the current run.
+- Treat submission as failed unless the API returns both a success response and a real task identifier.
 
 Template terminal states:
 
@@ -153,6 +170,14 @@ Always report:
 - returned ids
 - final status
 - final video URL or exact failure reason
+- local downloaded file path only when `poll --download` was used
+
+For a normal submit-first flow, report:
+
+- selected mode and service or model id
+- returned task id / conversation id
+- that the task has started processing
+- that the user can ask for `status` or `poll` later
 
 ## Error handling
 
@@ -160,6 +185,8 @@ Always report:
 - `404` during polling: verify that the poll endpoint and identifier type are correct.
 - failed task with no detailed reason: say the API did not return a more specific failure reason.
 - shell error `Argument list too long`: stop using inline `curl` and switch to the bundled Python helper immediately.
+- chat/session timeout while polling: explain that the task may still succeed, then use `status` later with the returned identifier.
+- if the API returns HTTP 200 but no valid task identifier, treat it as a failed submit and report the payload error instead of claiming success.
 
 ## Important reminders
 
